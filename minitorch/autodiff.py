@@ -22,9 +22,12 @@ def central_difference(f: Any, *vals: Any, arg: int = 0, epsilon: float = 1e-6) 
     Returns:
         An approximation of $f'_i(x_0, \ldots, x_{n-1})$
     """
-    # TODO: Implement for Task 1.1.
-    raise NotImplementedError("Need to implement for Task 1.1")
 
+    vals_plus = list(vals)
+    vals_plus[arg] += epsilon / 2
+    vals_minus = list(vals)
+    vals_minus[arg] -= epsilon / 2
+    return (f(*vals_plus) - f(*vals_minus)) / epsilon
 
 variable_count = 1
 
@@ -61,8 +64,23 @@ def topological_sort(variable: Variable) -> Iterable[Variable]:
     Returns:
         Non-constant Variables in topological order starting from the right.
     """
-    # TODO: Implement for Task 1.4.
-    raise NotImplementedError("Need to implement for Task 1.4")
+    visited = dict()
+    top_sort_vars = []
+ 
+    def topsort(root: Variable) -> None:
+
+        visited[root.unique_id] = True
+
+        if not root.is_leaf():
+            for p in root.parents:
+                if visited.get(p.unique_id) == None and p.is_constant() == False:
+                    topsort(p)
+
+        top_sort_vars.insert(0,root)
+
+    
+    topsort(variable)
+    return top_sort_vars
 
 
 def backpropagate(variable: Variable, deriv: Any) -> None:
@@ -76,8 +94,20 @@ def backpropagate(variable: Variable, deriv: Any) -> None:
 
     No return. Should write to its results to the derivative values of each leaf through `accumulate_derivative`.
     """
-    # TODO: Implement for Task 1.4.
-    raise NotImplementedError("Need to implement for Task 1.4")
+    topsortorder = topological_sort(variable)
+    derivs = dict()
+    derivs[variable.unique_id] = deriv
+
+    for var in topsortorder:
+        if not var.is_leaf():
+            deriv = derivs.get(var.unique_id, 0)
+            deriv = var.chain_rule(deriv)
+            for input_var, d_output in deriv:
+                if input_var.is_leaf():
+                    input_var.accumulate_derivative(d_output)
+                else:
+                    derivs[input_var.unique_id] = derivs.get(input_var.unique_id, 0) + d_output
+
 
 
 @dataclass
